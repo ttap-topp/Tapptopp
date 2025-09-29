@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ttaptopp — 20s Power Tap</title>
+  <meta name="description" content="ttaptopp: fast 20s tap game with combos, powerups, bombs, and a shareable score card." />
+  <meta property="og:title" content="ttaptopp — 20s Power Tap" />
+  <meta property="og:description" content="Fast 20s tap game with combos, powerups, bombs, and a shareable score card." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    :root{
+      --bg-1:#07132a; --bg-2:#071022;
+      --accent1:#7c3aed; --accent2:#06b6d4;
+      --muted:#94a3b8; --card:#071826;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:#e6eef8;-webkit-font-smoothing:antialiased}
+    .wrap{max-width:980px;margin:18px auto;padding:16px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;color:white}
+    h1{margin:0;font-size:18px}
+    .lead{margin:2px 0 0;color:var(--muted);font-size:13px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:14px;box-shadow:0 8px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    .game-wrap{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:16px}
+    .game-area{position:relative;width:92vw;max-width:420px;height:72vw;max-height:420px;border-radius:16px;background:linear-gradient(180deg,#04121b,#061428);overflow:hidden;border:1px solid rgba(255,255,255,0.02)}
+    .hud{display:flex;gap:12px;align-items:center;justify-content:space-between;width:92vw;max-width:420px;margin-top:8px}
+    .hud .stat{background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:10px;font-weight:700}
+    .controls{display:flex;gap:8px;align-items:center}
+    .btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));border:none;border-radius:10px;padding:10px 14px;color:white;font-weight:700;cursor:pointer}
+    .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:8px 10px;border-radius:10px}
+    .bubble{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,0.6);user-select:none;touch-action:none}
+    .hint{color:var(--muted);font-size:13px;margin-top:6px;text-align:center}
+    .footer{margin-top:14px;color:var(--muted);font-size:13px;text-align:center}
+    #over{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding:16px;}
+    #over .panel{background:#0b1326;border:1px solid rgba(255,255,255,0.06);border-radius:16px; padding:18px; width:min(92vw,420px); text-align:center}
+    #over h2{margin:0 0 8px 0}
+    .share-buttons button {background:#0ea5e9;border:none;border-radius:8px;padding:10px 14px;margin:5px;color:white;cursor:pointer;font-weight:700}
+    /* Simple ad placeholder styling (visible until you paste AdSense) */
+    #ad-placeholder{margin:10px 0;padding:10px;border-radius:10px;background:#0d1428;border:1px dashed rgba(255,255,255,0.25);color:#9fb3c8;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">K</div>
+        <div>
+          <h1>ttaptopp</h1>
+          <div class="lead">20s challenge — combos, powerups, bombs, and a shareable score card</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="startBtn">Start</button>
+        <button class="ghost" id="resetBtn">Reset</button>
+      </div>
+    </header>
+
+    <!-- Ad block above the game (replace with your AdSense) -->
+    <div id="ad-placeholder" class="card">
+      <b>Ad space:</b> Paste your AdSense code here (README shows how). This placeholder disappears after you replace it.
+      <!-- Example AdSense block (REPLACE ca-pub and data-ad-slot, then remove the placeholder wrapper)
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <ins class="adsbygoogle"
+          style="display:block"
+          data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+          data-ad-slot="1234567890"
+          data-ad-format="auto"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      -->
+    </div>
+
+    <div class="game-wrap card">
+      <div class="hud">
+        <div class="stat">Time: <span id="time">20</span>s</div>
+        <div class="stat">Score: <span id="score">0</span></div>
+        <div class="stat">Combo: <span id="combo">x1</span></div>
+        <div class="stat">High: <span id="high">0</span></div>
+      </div>
+
+      <div id="area" class="game-area" aria-label="Game area"></div>
+
+      <div class="hint">Tap the glowing orbs. Blue = +10, Green = +25, Gold = +100. Avoid red bombs. Power orbs: 2x (double points), ⏱ (+3s).</div>
+
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;justify-content:center">
+        <button class="btn" id="shareBtn">Download Score Card</button>
+        <button class="ghost" id="tutorialBtn">How to play</button>
+      </div>
+    </div>
+
+    <div class="footer">Made with ☕ — ttaptopp • Local scores only</div>
+  </div>
+
+  <!-- Game Over overlay -->
+  <div id="over">
+    <div class="panel">
+      <h2>Game Over</h2>
+      <p style="color:#9fb3c8">Your score: <b id="finalScore">0</b></p>
+      <div style="display:flex;gap:8px;justify-content:center;margin:8px 0">
+        <button class="btn" id="againBtn">Play Again</button>
+        <button class="ghost" id="closeOver">Close</button>
+      </div>
+      <div class="share-buttons" style="margin-top:8px">
+        <button onclick="shareWhatsApp()">Share on WhatsApp</button>
+        <button onclick="shareTwitter()">Share on Twitter</button>
+      </div>
+      <!-- Optional second ad spot at game over (replace with AdSense code as above) -->
+      <div id="ad-placeholder-2" style="margin-top:10px;padding:10px;border-radius:10px;background:#0d1428;border:1px dashed rgba(255,255,255,0.25);color:#9fb3c8;font-size:12px">
+        Ad space: paste AdSense code here too (optional).
+      </div>
+    </div>
+  </div>
+
+<script>
+// Game parameters
+const GAME_LENGTH = 20; // seconds
+const AREA = document.getElementById('area');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const timeEl = document.getElementById('time');
+const scoreEl = document.getElementById('score');
+const comboEl = document.getElementById('combo');
+const highEl = document.getElementById('high');
+const shareBtn = document.getElementById('shareBtn');
+const tutorialBtn = document.getElementById('tutorialBtn');
+const over = document.getElementById('over');
+const finalScoreEl = document.getElementById('finalScore');
+const againBtn = document.getElementById('againBtn');
+const closeOver = document.getElementById('closeOver');
+
+let timer = null;
+let timeLeft = GAME_LENGTH;
+let score = 0;
+let high = Number(localStorage.getItem('ttaptopp_high') || 0);
+let combo = 1;
+let comboTimer = null;
+let running = false;
+let bubbleIdCounter = 0;
+let activeBubbles = new Map(); // id => element
+highEl.textContent = high;
+
+// WebAudio beeps
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function beep(freq=440, duration=0.08, vol=0.1){
+  try{
+    if(!audioCtx) audioCtx = new AudioCtx();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.frequency.value = freq;
+    o.type = 'sine';
+    g.gain.value = vol;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    setTimeout(()=>{ o.stop(); o.disconnect(); g.disconnect(); }, duration*1000);
+  }catch(e){ /* no audio */ }
+}
+
+// Utils
+function rand(min,max){ return Math.random()*(max-min)+min; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+// Bubble types
+const TYPES = {
+  regular: {score:10, size:[48,72], color1:'#7c3aed', color2:'#06b6d4', lifespan:2400},
+  rare: {score:25, size:[56,86], color1:'#06d685', color2:'#06b6d4', lifespan:3000},
+  gold: {score:100, size:[72,110], color1:'#f6c85f', color2:'#f59d00', lifespan:3500},
+  bomb: {score:-1, size:[52,80], color1:'#ff5c5c', color2:'#d62828', lifespan:9999},
+  slow: {score:0, size:[42,56], color1:'#3dd3ff', color2:'#7c3aed', lifespan:3000, power:'slow'},
+  double: {score:0, size:[42,56], color1:'#ffd86b', color2:'#ff8a00', lifespan:3000, power:'double'}
+};
+
+function spawnRandom(){
+  const r = Math.random();
+  let typeKey = 'regular';
+  if(r > 0.97) typeKey = 'gold';
+  else if(r > 0.90) typeKey = 'rare';
+  else if(r > 0.86) typeKey = 'bomb';
+  else if(r > 0.82) typeKey = 'double';
+  else if(r > 0.78) typeKey = 'slow';
+
+  const spec = TYPES[typeKey];
+  const el = document.createElement('div');
+  const id = 'b_'+(++bubbleIdCounter);
+  el.className = 'bubble';
+  const size = Math.floor(rand(spec.size[0], spec.size[1]));
+  el.style.width = size+'px'; el.style.height = size+'px'; el.dataset.type = typeKey; el.dataset.id = id;
+  el.style.left = rand(6, AREA.clientWidth - size - 6) + 'px';
+  el.style.top = rand(6, AREA.clientHeight - size - 6) + 'px';
+  el.style.background = `linear-gradient(135deg, ${spec.color1}, ${spec.color2})`;
+  el.style.fontSize = Math.max(12, Math.floor(size/3))+'px';
+  el.textContent = (typeKey==='bomb') ? '☢' : (typeKey==='gold') ? '★' : (typeKey==='double') ? '2x' : (typeKey==='slow') ? '⏱' : '+';
+
+  el.addEventListener('pointerdown', (ev)=>{ ev.stopPropagation(); handleTap(el, spec); }, {passive:true});
+
+  AREA.appendChild(el);
+  activeBubbles.set(id, el);
+
+  if(spec.lifespan < 9000){
+    setTimeout(()=>{ if(activeBubbles.has(id)){ removeBubble(id); } }, spec.lifespan);
+  }
+  animateBubble(el);
+}
+
+function animateBubble(el){
+  const px = parseFloat(el.style.left), py = parseFloat(el.style.top);
+  const amp = rand(6, 26);
+  const dur = rand(2000,4000);
+  let start = performance.now();
+  function frame(t){
+    const dt = (t - start);
+    const nx = px + Math.sin(dt/dur * Math.PI*2) * amp;
+    const ny = py + Math.cos(dt/(dur*1.2) * Math.PI*2) * amp*0.6;
+    el.style.transform = `translate(${nx-px}px, ${ny-py}px)`;
+    el.style.rotate = ((dt/60) % 360) + 'deg';
+    if(activeBubbles.has(el.dataset.id)){ requestAnimationFrame(frame); } else { el.style.transform=''; el.style.rotate='0deg'; }
+  }
+  requestAnimationFrame(frame);
+}
+
+function removeBubble(id){
+  const el = activeBubbles.get(id);
+  if(!el) return;
+  el.style.transition = 'transform 220ms ease, opacity 220ms ease';
+  el.style.opacity = '0';
+  setTimeout(()=>{ if(el.parentElement) el.parentElement.removeChild(el); activeBubbles.delete(id); }, 260);
+}
+
+function handleTap(el, spec){
+  const type = el.dataset.type;
+  if(type === 'bomb'){
+    beep(120, 0.12, 0.18);
+    endGame(true, 'Bomb exploded!');
+    return;
+  }
+  if(spec.power === 'slow'){
+    timeLeft = Math.min(GAME_LENGTH, timeLeft + 3);
+    flashStat('+3s');
+    beep(900, 0.06, 0.08);
+  } else if(spec.power === 'double'){
+    activateDouble(5);
+    flashStat('2x for 5s');
+    beep(1100, 0.06, 0.08);
+  } else {
+    const base = spec.score || 0;
+    const gained = Math.max(0, Math.round(base * combo));
+    score += gained;
+    flashScore('+'+gained);
+    beep(900 + Math.random()*600, 0.04, 0.06);
+    increaseCombo();
+  }
+  const id = el.dataset.id;
+  removeBubble(id);
+  updateHUD();
+}
+
+function increaseCombo(){
+  combo = Math.min(8, combo + 0.1);
+  resetComboTimer();
+  comboEl.textContent = 'x' + combo.toFixed(1);
+}
+function resetComboTimer(){
+  if(comboTimer) clearTimeout(comboTimer);
+  comboTimer = setTimeout(()=>{ combo = Math.max(1, combo - 0.6); comboEl.textContent = 'x' + combo.toFixed(1); }, 1400);
+}
+
+let doubleActive = false;
+function activateDouble(sec){
+  doubleActive = true;
+  const prevCombo = combo;
+  combo = Math.max(combo, 2); comboEl.textContent = 'x' + combo.toFixed(1);
+  setTimeout(()=>{ doubleActive = false; combo = Math.max(1, combo - 0.9); comboEl.textContent = 'x' + combo.toFixed(1); }, sec*1000);
+}
+
+function flashScore(text){
+  const f = document.createElement('div'); f.style.position='absolute'; f.style.left='50%'; f.style.top='6%'; f.style.transform='translateX(-50%)'; f.style.padding='6px 12px'; f.style.borderRadius='8px'; f.style.background='linear-gradient(90deg, rgba(124,58,237,0.15), rgba(6,182,212,0.12))'; f.style.color='white'; f.style.fontWeight='700'; f.style.pointerEvents='none'; f.textContent = text;
+  AREA.appendChild(f);
+  setTimeout(()=>{ f.style.transition='opacity 600ms, transform 600ms'; f.style.opacity='0'; f.style.transform='translateX(-50%) translateY(-18px)'; setTimeout(()=>{ if(f.parentElement) f.parentElement.removeChild(f); },650); },420);
+}
+function flashStat(text){
+  const f = document.createElement('div'); f.style.position='absolute'; f.style.left='50%'; f.style.top='88%'; f.style.transform='translateX(-50%)'; f.style.padding='6px 10px'; f.style.borderRadius='8px'; f.style.background='rgba(255,255,255,0.04)'; f.style.color='white'; f.style.fontWeight='700'; f.style.pointerEvents='none'; f.textContent = text;
+  AREA.appendChild(f);
+  setTimeout(()=>{ f.style.transition='opacity 700ms, transform 700ms'; f.style.opacity='0'; f.style.transform='translateX(-50%) translateY(24px)'; setTimeout(()=>{ if(f.parentElement) f.parentElement.removeChild(f); },750); },700);
+}
+
+let spawnInterval = null;
+function startGame(){
+  if(running) return;
+  running = true;
+  score = 0; combo = 1; timeLeft = GAME_LENGTH;
+  updateHUD();
+  startBtn.textContent = 'Playing...';
+  startBtn.disabled = true;
+  spawnInterval = setInterval(()=>{
+    const intensity = Math.max(1, Math.floor(1 + (GAME_LENGTH - timeLeft)/3));
+    for(let i=0;i<intensity;i++){ spawnRandom(); }
+  }, 700);
+  timer = setInterval(()=>{
+    timeLeft = Math.max(0, timeLeft - 1);
+    timeEl.textContent = timeLeft;
+    if(timeLeft <= 0) endGame(false, 'Time up!');
+  }, 1000);
+  for(let i=0;i<3;i++) spawnRandom();
+}
+
+function endGame(isBomb=false, message='') {
+  if(!running) return;
+  running = false;
+  clearInterval(timer); clearInterval(spawnInterval);
+  for(const [id, el] of activeBubbles){ if(el.parentElement) el.parentElement.removeChild(el); }
+  activeBubbles.clear();
+  startBtn.textContent = 'Start';
+  startBtn.disabled = false;
+  if(!isBomb && score > high){ high = score; localStorage.setItem('ttaptopp_high', high); highEl.textContent = high; flashStat('New High!'); beep(1400,0.12,0.12); }
+  beep(isBomb?140:900, 0.14, 0.12);
+  finalScoreEl.textContent = score;
+  over.style.display = 'flex';
+}
+
+function resetGame(){
+  if(running){ endGame(false); }
+  score = 0; combo = 1; timeLeft = GAME_LENGTH; updateHUD();
+  for(const [id, el] of activeBubbles){ if(el.parentElement) el.parentElement.removeChild(el); }
+  activeBubbles.clear();
+}
+
+function updateHUD(){ scoreEl.textContent = score; comboEl.textContent = 'x' + combo.toFixed(1); timeEl.textContent = timeLeft; highEl.textContent = high; }
+
+AREA.addEventListener('pointerdown', (ev)=>{
+  if(!running) return;
+  if(Math.random() < 0.25) spawnRandom();
+});
+
+shareBtn.addEventListener('click', async ()=>{
+  const c = document.createElement('canvas'); c.width = 1200; c.height = 630; const ctx = c.getContext('2d');
+  const g = ctx.createLinearGradient(0,0,c.width,c.height); g.addColorStop(0,'#07132a'); g.addColorStop(1,'#061428'); ctx.fillStyle = g; ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle = 'white'; ctx.font = 'bold 56px sans-serif'; ctx.fillText('ttaptopp', 60, 100);
+  ctx.font = '28px sans-serif'; ctx.fillStyle = '#cbd5e1'; ctx.fillText('20s Challenge — Your Score', 60, 150);
+  ctx.font = 'bold 120px sans-serif'; ctx.fillStyle = '#ffd86b'; ctx.fillText(String(score), 60, 330);
+  ctx.font = '28px sans-serif'; ctx.fillStyle = '#cbd5e1'; ctx.fillText(`High: ${high}   Combo: ${combo.toFixed(1)}`, 60, 420);
+  ctx.font = '22px sans-serif'; ctx.fillStyle = '#9fb3c8'; ctx.fillText('Can you beat me? Share this and tag a friend.', 60, 520);
+  const data = c.toDataURL('image/png'); const a = document.createElement('a'); a.href = data; a.download = `ttaptopp_score_${score}.png`; a.click();
+});
+
+tutorialBtn.addEventListener('click', ()=>{
+  alert('ttaptopp — How to play:\\n\\n• Tap the colored orbs to score.\\n• Blue = common (+10), Green = rare (+25), Gold = very rare (+100).\\n• Avoid red bombs — they end the run instantly.\\n• Power orbs: 2x (double points) and ⏱ (adds +3s).\\n• 20 seconds to score as much as you can — good luck!');
+});
+
+startBtn.addEventListener('click', ()=>{ over.style.display='none'; startGame(); });
+resetBtn.addEventListener('click', ()=>{ over.style.display='none'; resetGame(); });
+againBtn.addEventListener('click', ()=>{ over.style.display='none'; startGame(); });
+closeOver.addEventListener('click', ()=>{ over.style.display='none'; });
+
+window.addEventListener('resize', ()=>{});
+
+for(let i=0;i<2;i++){ spawnRandom(); setTimeout(spawnRandom, 400+i*200); }
+updateHUD();
+
+function shareWhatsApp() {
+  let msg = `🔥 I scored ${score} in ttaptopp! Can you beat me? Play here: ${window.location.href}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+}
+function shareTwitter() {
+  let msg = `🔥 I scored ${score} in ttaptopp! Can you beat me?`;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(msg)}&url=${encodeURIComponent(window.location.href)}`);
+}
+</script>
+</body>
+</html>
